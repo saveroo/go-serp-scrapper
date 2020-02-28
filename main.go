@@ -57,7 +57,7 @@ func withColly(query string) bool { // Void
 	}
 	return true
 }
-
+// TODO: Test
 func main() {
 	reader := bufio.NewReader(os.Stdin)
 	for {
