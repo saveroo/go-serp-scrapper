@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -11,11 +13,14 @@ import (
 	"github.com/gocolly/colly"
 )
 
-var google = "https://www.google.com/search?q="
+var linkGoogle = "https://www.google.com/search?q="
+var google = func (q string) string {
+	return linkGoogle + url.QueryEscape(q)
+}
 
-// Void
-func withSoup(query string) {
-	resp, err := soup.Get(google + query)
+// TODO: Leave it here to be refactored, and i think it is not needed, only for lib comparison
+func withSoup(query string) { // Void
+	resp, err := soup.Get(google(query))
 	if err != nil {
 		os.Exit(1)
 	}
@@ -29,8 +34,8 @@ func withSoup(query string) {
 	}
 }
 
-// Void
-func withColly(query string) {
+// TODO: Implement parameter to loop on specific page, in order to scrap multiple links using go routine
+func withColly(query string) bool { // Void
 	c := colly.NewCollector()
 	re := regexp.MustCompile(`(?m)/url\?q=(.*)`)
 	c.OnHTML("#main", func(e *colly.HTMLElement) {
@@ -45,7 +50,12 @@ func withColly(query string) {
 			}
 		})
 	})
-	c.Visit(google + query)
+	log.Println("Scrapped From", google(query))
+	err := c.Visit(google(query))
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 func main() {
@@ -63,6 +73,8 @@ func main() {
 		if cmdStr == "1" {
 			os.Exit(1)
 		}
-		withColly(cmdStr)
+		if withColly(cmdStr) {
+			os.Exit(1)
+		}
 	}
 }
